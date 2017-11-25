@@ -1,0 +1,104 @@
+#Sample code used in microarray processing for a class project, This sample gets 6 NT DNA motifs
+
+import string
+import random
+def random_generator(size=6, chars=string.ascii_uppercase + string.digits):    
+	return ''.join(random.choice(chars) for x in range(size))
+
+#print random_generator(6, "ATCG")
+count=0
+motifs={}
+while count <=4095:    
+	word=random_generator(6,"ATCG")    
+	if word not in motifs:        
+		motifs[word]="0"        
+		count=count+1
+
+print motifs      
+
+
+
+#This section was done in collabration with a classmate (rschenck on github)
+#choose longest transcript
+from Bio import SeqIO
+import operator
+#remove polyA tail
+def polyA(seq):   
+	seq = seq[::-1]   
+	for i in range(0,len(seq)):        
+		if seq[i] == 'A':            
+			index = i       
+		else:           
+		break   
+		seq = seq[i:]    
+		seq = seq[::-1]    
+		return seq
+
+#extracts the 5' and 3' UTR, only for + strand, and - strand
+def utr(cds_loc, seq):    
+	cds_loc = cds_loc.split(':')    
+	cds_loc_end = int(cds_loc[1].strip('](+)'))    
+	cds_loc_start = int(cds_loc[0].strip('['))    
+	fivUTR = seq[:cds_loc_start]    
+	thrUTR = seq[cds_loc_end:]    
+	thrUTR = polyA(thrUTR)    
+	return fivUTR, thrUTR
+
+#obtain the canonical transcript
+def extract_longest(record):    
+	seq_dict = dict()    
+	for record in records:        
+		for feature in record.features:            
+			if feature.type == 'CDS':            
+			#update dictionary with name of sequence and                 
+			name = feature.qualifiers['protein_id']                
+			seq_dict.update({''.join(name):len(record.seq)})    
+	return max(seq_dict.iteritems(), key=operator.itemgetter(1))[0]
+
+#open files input/output
+
+infile = 'project.gb'
+records = SeqIO.parse(infile, 'genbank')
+outfile = open('3primeUTR.txt', 'w+')
+
+#get the cononical sequence ID
+seq_to_use = extract_longest(records)
+#print seq_to_use
+records = SeqIO.parse(infile, 'genbank')
+for record in records:    
+	for feature in record.features:        
+		if feature.type == 'CDS':            
+			name  = (feature.qualifiers["protein_id"])            
+			if ''.join(feature.qualifiers['protein_id']) == seq_to_use:                
+				cds_loc = str(feature.location)                    
+				fivUTR, thrUTR = utr(cds_loc, record.seq)            
+			else:                
+				pass
+import string
+import random
+def random_generator(size=6, chars=string.ascii_uppercase + string.digits):    
+	return ''.join(random.choice(chars) for x in range(size))
+
+
+#motifs dictionary
+count=0
+motifs={}
+while count <=4095:    
+	word=random_generator(6,"ATCG")    
+	if word not in motifs:        
+	motifs[word]="0"        
+	count=count+1
+
+#motif finder                      
+for word in motifs:    
+	if word in thrUTR:        
+		word_count = thrUTR.count(word)        
+		motifs[word] = word_count        
+		freq = '\n' + str(motifs)
+
+outfile.write(str(name))      
+outfile.write ('\n' + "3' UTR is: ")
+outfile.write ('\n' + str(thrUTR)
+outfile.write (freq)
+print ('All Done!') 
+outfile.close()
